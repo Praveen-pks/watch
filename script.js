@@ -7,7 +7,7 @@ const statementRound = statementSection.querySelector('.round-link');
 const watermarkLetters = [...document.querySelectorAll('#statementWatermark span')];
 const heroSection = document.getElementById('heroScroll');
 const model = document.getElementById('explodedWatch');
-const heroFrame = document.getElementById('heroFrame');
+const heroVideo = document.getElementById('heroVideo');
 const heroCopy = document.getElementById('heroCopy');
 const heroKicker = document.getElementById('heroKicker');
 const heroTitle = document.getElementById('heroTitle');
@@ -33,14 +33,23 @@ const steps = [
 
 // Lenis keeps the long frame sequence fluid while jQuery handles in-page links.
 const smoothScroll = window.Lenis ? new window.Lenis({
-  duration: 1.15,
+  duration: 1.35,
   smoothWheel: true,
   syncTouch: true,
-  wheelMultiplier: 0.9
+  wheelMultiplier: 0.8
 }) : null;
 
+let heroTargetTime = 0;
+let previousFrameTime = 0;
 function smoothScrollFrame(time) {
   if (smoothScroll) smoothScroll.raf(time);
+  if (Number.isFinite(heroVideo.duration) && heroVideo.duration > 0) {
+    const elapsed = previousFrameTime ? Math.min(time - previousFrameTime, 50) : 16;
+    const easing = 1 - Math.exp(-elapsed / 125);
+    const nextTime = heroVideo.currentTime + (heroTargetTime - heroVideo.currentTime) * easing;
+    if (Math.abs(nextTime - heroVideo.currentTime) > 0.025) heroVideo.currentTime = nextTime;
+  }
+  previousFrameTime = time;
   requestAnimationFrame(smoothScrollFrame);
 }
 requestAnimationFrame(smoothScrollFrame);
@@ -85,12 +94,8 @@ const collectionSection = document.querySelector('.collection');
 const collectionScroll = document.getElementById('collectionScroll');
 
 let isTicking = false;
-let currentFrame = 1;
 let currentHeroStage = -1;
 let heroCopyTimer;
-const frameCount = 240;
-const prefetchedFrames = new Set([1]);
-const framePath = (frame) => `images/hero-section/ezgif-frame-${String(frame).padStart(3, '0')}.png`;
 const heroStages = [
   { kicker: 'The Franklord / 01', title: 'Precision,<br><em>unfolded.</em>', description: 'A timepiece built around its beating heart. Scroll to enter the mechanics within.', index: '01 / 04', feature: 'Open-worked<br>mechanism' },
   { kicker: 'The calibre / 02', title: 'Made to<br><em>move you.</em>', description: 'Every surface is shaped around the energy of the automatic movement.', index: '02 / 04', feature: '288 hand-finished<br>components' },
@@ -102,17 +107,6 @@ function mixHex(start, end, amount) {
   const parse = (hex) => hex.match(/[0-9a-f]{2}/gi).map((part) => parseInt(part, 16));
   const a = parse(start); const b = parse(end);
   return `rgb(${a.map((value, index) => Math.round(value + (b[index] - value) * amount)).join(',')})`;
-}
-
-function preloadNearbyFrames(frame) {
-  for (let offset = -8; offset <= 12; offset += 1) {
-    const nearby = frame + offset;
-    if (nearby < 1 || nearby > frameCount) continue;
-    if (prefetchedFrames.has(nearby)) continue;
-    prefetchedFrames.add(nearby);
-    const image = new Image();
-    image.src = framePath(nearby);
-  }
 }
 
 function updateHeroCopy(stage) {
@@ -134,11 +128,8 @@ function updateHeroCopy(stage) {
 }
 
 function updateHero(progress) {
-  const frame = Math.min(frameCount, Math.max(1, Math.round(progress * (frameCount - 1)) + 1));
-  if (frame !== currentFrame) {
-    currentFrame = frame;
-    heroFrame.src = framePath(frame);
-    preloadNearbyFrames(frame);
+  if (Number.isFinite(heroVideo.duration) && heroVideo.duration > 0) {
+    heroTargetTime = Math.min(heroVideo.duration - 0.04, progress * heroVideo.duration);
   }
   heroProgress.style.width = `${progress * 100}%`;
   updateHeroCopy(Math.min(heroStages.length - 1, Math.floor(progress * heroStages.length)));
@@ -168,6 +159,7 @@ function updateScroll() {
   document.querySelector('.part-strap-bottom').style.transform = `translateY(${169 * explodedSpread}px)`;
   const rotation = 23 - progress * 12 - insideProgress * 11;
   model.style.transform = `rotateZ(${rotation}deg) scale(${.8 + progress * .08 + insideProgress * 5.2})`;
+
   const detail = steps[stage];
   if (card.dataset.stage !== String(stage)) {
     card.dataset.stage = stage;
@@ -217,5 +209,5 @@ function requestUpdate() {
 
 window.addEventListener('scroll', requestUpdate, { passive: true });
 window.addEventListener('resize', requestUpdate);
-preloadNearbyFrames(1);
+heroVideo.addEventListener('loadedmetadata', requestUpdate);
 updateScroll();

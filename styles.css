@@ -1,4 +1,6 @@
 :root { --ink:#151510; --paper:#e9e5dd; --acid:#c6fb50; --line:rgba(21,21,16,.18); --serif:'Playfair Display', Georgia, serif; --sans:'Manrope', sans-serif; --mono:'DM Mono', monospace; }
+.hero-image-stage video{width:100%;height:100%;object-fit:cover;object-position:center;display:block;transform:scale(1.012)}
+@media (max-width:800px){.hero-image-stage video{object-position:58% center}}
 @media (max-width:800px){.newsletter{padding:90px 27px 80px!important;min-height:420px!important}.newsletter h2{font-size:52px}.newsletter form{max-width:none}footer{padding:58px 27px 22px!important;min-height:420px!important}}
 .products-track .product-card,.products-track .product-card.is-visible{opacity:1!important;transform:none!important;transition:none!important}
 .tone-slate{background:#aeb2ad}.tone-ivory{background:#ddd6c2}.tone-forest{background:#8ea18d}.product-card{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s cubic-bezier(.2,.7,.2,1)}.product-card.is-visible{opacity:1;transform:translateY(0)}
